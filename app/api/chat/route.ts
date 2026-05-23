@@ -4,8 +4,21 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
 
+    const apiKey = process.env.OPENAI_API_KEY
+
+    if (!apiKey) {
+      return Response.json(
+        {
+          error: 'OPENAI_API_KEY não encontrada',
+        },
+        {
+          status: 500,
+        }
+      )
+    }
+
     const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey,
     })
 
     const completion = await openai.chat.completions.create({
@@ -26,10 +39,10 @@ export async function POST(req: Request) {
     return Response.json({
       message: completion.choices[0].message.content,
     })
-  } catch (error) {
+  } catch (error: any) {
     return Response.json(
       {
-        error: 'Erro ao conectar com OpenAI',
+        error: error.message,
       },
       {
         status: 500,
