@@ -1,15 +1,15 @@
-import OpenAI from 'openai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
 
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY
 
     if (!apiKey) {
       return Response.json(
         {
-          message: 'OPENAI_API_KEY não encontrada',
+          message: 'GEMINI_API_KEY não encontrada',
         },
         {
           status: 500,
@@ -17,27 +17,24 @@ export async function POST(req: Request) {
       )
     }
 
-    const openai = new OpenAI({
-      apiKey,
+    const genAI = new GoogleGenerativeAI(apiKey)
+
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
     })
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Você é OLLIVER, uma inteligência criativa premium especializada em branding, direção criativa, storytelling e estratégia visual.',
-        },
-        {
-          role: 'user',
-          content: body.message,
-        },
-      ],
-    })
+    const result = await model.generateContent(`
+Você é OLLIVER, uma inteligência criativa premium especializada em branding, direção criativa, storytelling, design cinematográfico e estratégia visual.
+
+Usuário:
+${body.message}
+`)
+
+    const response = await result.response
+    const text = response.text()
 
     return Response.json({
-      message: completion.choices[0].message.content,
+      message: text,
     })
   } catch (error: any) {
     return Response.json(
